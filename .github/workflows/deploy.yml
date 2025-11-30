@@ -25,32 +25,34 @@ jobs:
             # Navigate to home directory
             cd /home/ec2-user
             
-            # Remove existing app directory if exists and clone fresh
-            rm -rf app
-            git clone https://github.com/Prithviiixx/cpp.git app
-            
-            # Navigate to app directory (the repo root contains all flask files)
-            cd app
-            
-            # Install dependencies
-            pip3 install -r requirements.txt --user
-            
             # Stop existing Flask app if running
             pkill -f "python3 app.py" || true
             pkill -f "gunicorn" || true
-            
-            # Wait a moment for processes to stop
             sleep 2
+            
+            # Remove existing app directory with sudo
+            sudo rm -rf /home/ec2-user/app
+            
+            # Clone fresh repository
+            git clone https://github.com/Prithviiixx/cpp.git /home/ec2-user/app
+            
+            # Navigate to app directory
+            cd /home/ec2-user/app
+            
+            # Install dependencies
+            pip3 install flask flask-sqlalchemy werkzeug boto3 --user
+            pip3 install -r requirements.txt --user || true
             
             # Start the Flask app with nohup
             nohup python3 app.py > /home/ec2-user/flask_app.log 2>&1 &
             
             # Verify the app started
-            sleep 3
+            sleep 5
             if pgrep -f "python3 app.py" > /dev/null; then
               echo "Flask app started successfully!"
+              echo "Application URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):5000"
             else
-              echo "Failed to start Flask app. Check logs."
+              echo "Failed to start Flask app. Check logs:"
               cat /home/ec2-user/flask_app.log
               exit 1
             fi

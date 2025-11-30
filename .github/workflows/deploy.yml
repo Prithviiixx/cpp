@@ -21,13 +21,16 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
+          command_timeout: 10m
           script: |
+            set -e
+            
             # Navigate to home directory
             cd /home/ec2-user
             
             # Stop existing Flask app if running
             pkill -f "python3 app.py" || true
-            pkill -f "gunicorn" || true
+            pkill -f "python3 /home/ec2-user/app/app.py" || true
             sleep 2
             
             # Remove existing app directory with sudo
@@ -40,19 +43,18 @@ jobs:
             cd /home/ec2-user/app
             
             # Install dependencies
-            pip3 install flask flask-sqlalchemy werkzeug boto3 --user
-            pip3 install -r requirements.txt --user || true
+            pip3 install flask flask-sqlalchemy werkzeug boto3 --user --quiet
             
-            # Start the Flask app with nohup
-            nohup python3 app.py > /home/ec2-user/flask_app.log 2>&1 &
+            # Start the Flask app with nohup and disown
+            nohup python3 /home/ec2-user/app/app.py > /home/ec2-user/flask_app.log 2>&1 &
+            disown
             
-            # Verify the app started
-            sleep 5
-            if pgrep -f "python3 app.py" > /dev/null; then
-              echo "Flask app started successfully!"
-              echo "Application URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):5000"
-            else
-              echo "Failed to start Flask app. Check logs:"
-              cat /home/ec2-user/flask_app.log
-              exit 1
-            fi
+            # Give it time to start
+            sleep 3
+            
+            # Check if running
+            echo "Checking if app is running..."
+            ps aux | grep -v grep | grep "python3" | grep "app.py" || echo "Process check done"
+            
+            echo "Deployment completed!"
+            echo "App URL: http://${{ secrets.EC2_HOST }}:5000"

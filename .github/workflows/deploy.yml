@@ -21,32 +21,16 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
+          script_stop: false
           script: |
-            # Stop existing Flask app if running
-            pkill -f "python3.*app.py" || true
-            sleep 2
-            
-            # Remove existing app directory
+            pkill -f "python3.*app.py" 2>/dev/null || true
+            sleep 1
             sudo rm -rf /home/ec2-user/app
-            
-            # Clone fresh repository
             git clone https://github.com/Prithviiixx/cpp.git /home/ec2-user/app
-            
-            # Install dependencies
             cd /home/ec2-user/app
-            pip3 install flask flask-sqlalchemy werkzeug boto3 --user
-            
-            # Create startup script
-            cat > /home/ec2-user/start_app.sh << 'EOF'
-            #!/bin/bash
-            cd /home/ec2-user/app
-            python3 app.py >> /home/ec2-user/flask_app.log 2>&1
-            EOF
-            
-            chmod +x /home/ec2-user/start_app.sh
-            
-            # Start app using nohup with setsid to fully detach
-            setsid nohup /home/ec2-user/start_app.sh &
-            
-            sleep 2
-            echo "Deployment completed!"
+            pip3 install flask flask-sqlalchemy werkzeug boto3 --user 2>/dev/null
+            echo '#!/bin/bash' > /home/ec2-user/run.sh
+            echo 'cd /home/ec2-user/app && python3 app.py' >> /home/ec2-user/run.sh
+            chmod +x /home/ec2-user/run.sh
+            nohup /home/ec2-user/run.sh > /home/ec2-user/flask.log 2>&1 &
+            echo "Done"

@@ -14,29 +14,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+      
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          request_pty: false
-          script_stop: false
-          timeout: 60s
-          command_timeout: 5m
-          script: |
-            pkill -f "python3.*app.py" 2>/dev/null || true
-            sleep 1
-            sudo rm -rf /home/ec2-user/app 2>/dev/null || true
-            git clone https://github.com/Prithviiixx/cpp.git /home/ec2-user/app 2>&1
-            cd /home/ec2-user/app
-            pip3 install flask flask-sqlalchemy werkzeug boto3 --user 2>&1 | tail -5
-            echo '#!/bin/bash' > /home/ec2-user/run.sh
-            echo 'cd /home/ec2-user/app' >> /home/ec2-user/run.sh
-            echo 'exec python3 app.py' >> /home/ec2-user/run.sh
-            chmod +x /home/ec2-user/run.sh
-            nohup bash -c '/home/ec2-user/run.sh > /home/ec2-user/flask.log 2>&1 &' >/dev/null 2>&1
-            sleep 1
-            echo "Deployment completed"
-            exit 0
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/ec2_key ec2-user@${{ secrets.EC2_HOST }} 'bash -s' << 'ENDSSH'
+          # Kill existing app
+          pkill -f "python3.*app.py" || true
+          sleep 1
+          
+          # Clean and clone
+          sudo rm -rf /home/ec2-user/app
+          git clone https://github.com/Prithviiixx/cpp.git /home/ec2-user/app
+          
+          # Install deps
+          cd /home/ec2-user/app
+          pip3 install flask flask-sqlalchemy werkzeug boto3 --user
+          
+          # Create systemd service
+          sudo tee /etc/systemd/system/flaskapp.service > /dev/null << 'EOF'
+          [Unit]
+          Description=Flask Agriculture App
+          After=network.target
+          
+          [Service]
+          User=ec2-user
+          WorkingDirectory=/home/ec2-user/app
+          ExecStart=/usr/bin/python3 /home/ec2-user/app/app.py
+          Restart=always
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          
+          # Start service
+          sudo systemctl daemon-reload
+          sudo systemctl enable flaskapp
+          sudo systemctl restart flaskapp
+          
+          echo "Deployment completed!"
+          ENDSSH

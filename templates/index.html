@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero text-center rounded-3 mb-5">
+    <h1 class="display-4"><i class="bi bi-tree"></i> Agriculture & Forestry Manager</h1>
+    <p class="lead">Cloud-powered solution for managing your crops and forests</p>
+    {% if not session.get('user_id') %}
+    <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg me-2">Get Started</a>
+    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">Login</a>
+    {% else %}
+    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">Go to Dashboard</a>
+    {% endif %}
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-cloud-upload display-4 text-success"></i>
+                <h5 class="card-title mt-3">Cloud Storage</h5>
+                <p class="card-text">Store crop images securely in AWS S3</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-database display-4 text-success"></i>
+                <h5 class="card-title mt-3">Activity Logging</h5>
+                <p class="card-text">Track all activities with DynamoDB</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-lightning display-4 text-success"></i>
+                <h5 class="card-title mt-3">Serverless Analysis</h5>
+                <p class="card-text">AWS Lambda for crop analysis</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-flower1 text-success"></i> Agriculture Management</h5>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check-circle text-success"></i> Track crop planting and harvesting</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Monitor crop status and health</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Estimate yields and water requirements</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Get seasonal recommendations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-tree text-success"></i> Forestry Management</h5>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check-circle text-success"></i> Manage forest plantations</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Track timber yields</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Calculate carbon sequestration</li>
+                    <li><i class="bi bi-check-circle text-success"></i> Plan sustainable harvesting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

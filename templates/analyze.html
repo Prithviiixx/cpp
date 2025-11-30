@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis - AgriForest Manager{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-graph-up"></i> Crop Analysis</h2>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Statistics</h5>
+            </div>
+            <div class="card-body">
+                {% if analysis.statistics %}
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total Crops/Forests</span>
+                        <strong>{{ analysis.statistics.total_crops }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total Area</span>
+                        <strong>{{ analysis.statistics.total_area }} ha</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Agriculture Area</span>
+                        <strong>{{ analysis.statistics.agriculture_area }} ha</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Forestry Area</span>
+                        <strong>{{ analysis.statistics.forestry_area }} ha</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Estimated Total Yield</span>
+                        <strong>{{ analysis.statistics.total_yield_estimate }} units</strong>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Recommendations</h5>
+            </div>
+            <div class="card-body">
+                {% if analysis.recommendations %}
+                <ul class="list-group list-group-flush">
+                    {% for rec in analysis.recommendations %}
+                    <li class="list-group-item">
+                        <i class="bi bi-check-circle text-success"></i> {{ rec }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">Add crops to get recommendations.</p>
+                {% endif %}
+                
+                {% if analysis.carbon_sequestration %}
+                <div class="alert alert-success mt-3">
+                    <i class="bi bi-leaf"></i> <strong>Carbon Offset:</strong> 
+                    Your forests sequester {{ analysis.carbon_sequestration }} tonnes of CO2/year
+                </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <span class="badge bg-{{ 'success' if analysis.risk_assessment == 'low' else 'warning' }}">
+                        Risk Level: {{ analysis.risk_assessment|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if analysis.crops_detail %}
+<div class="card mt-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Crop Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Area (ha)</th>
+                        <th>Status</th>
+                        <th>Days Since Planting</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in analysis.crops_detail %}
+                    <tr>
+                        <td>{{ crop.name }}</td>
+                        <td>{{ crop.type }}</td>
+                        <td>{{ crop.area }}</td>
+                        <td>{{ crop.status }}</td>
+                        <td>{{ crop.days_planted }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if lambda_result %}
+<div class="card mt-4">
+    <div class="card-header bg-warning">
+        <h5 class="mb-0"><i class="bi bi-lightning"></i> Lambda Analysis Result</h5>
+    </div>
+    <div class="card-body">
+        <pre>{{ lambda_result | tojson(indent=2) }}</pre>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

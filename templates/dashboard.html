@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - AgriForest Manager{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+<p class="text-muted">Welcome, {{ session.username }}!</p>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ stats.total_crops }}</h3>
+                <p class="mb-0">Total Crops</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ stats.total_area }} ha</h3>
+                <p class="mb-0">Total Area</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ stats.agriculture_count }}</h3>
+                <p class="mb-0">Agriculture</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark text-white">
+            <div class="card-body text-center">
+                <h3>{{ stats.forestry_count }}</h3>
+                <p class="mb-0">Forestry</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list"></i> Your Crops & Forests</h5>
+        <a href="{{ url_for('add_crop') }}" class="btn btn-success btn-sm">
+            <i class="bi bi-plus-circle"></i> Add New
+        </a>
+    </div>
+    <div class="card-body">
+        {% if crops %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Area (ha)</th>
+                        <th>Planting Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in crops %}
+                    <tr>
+                        <td>{{ crop.name }}</td>
+                        <td>
+                            {% if crop.crop_type == 'agriculture' %}
+                            <span class="badge bg-success">Agriculture</span>
+                            {% else %}
+                            <span class="badge bg-dark">Forestry</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ crop.area }}</td>
+                        <td>{{ crop.planting_date }}</td>
+                        <td><span class="badge bg-info">{{ crop.status }}</span></td>
+                        <td>
+                            <a href="{{ url_for('edit_crop', id=crop.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{{ url_for('delete_crop', id=crop.id) }}" class="btn btn-sm btn-outline-danger" 
+                               onclick="return confirm('Are you sure you want to delete this crop?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">No crops or forests yet. Start by adding one!</p>
+            <a href="{{ url_for('add_crop') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Add Your First Crop
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

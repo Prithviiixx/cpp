@@ -21,40 +21,32 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          command_timeout: 10m
           script: |
-            set -e
-            
-            # Navigate to home directory
-            cd /home/ec2-user
-            
             # Stop existing Flask app if running
-            pkill -f "python3 app.py" || true
-            pkill -f "python3 /home/ec2-user/app/app.py" || true
+            pkill -f "python3.*app.py" || true
             sleep 2
             
-            # Remove existing app directory with sudo
+            # Remove existing app directory
             sudo rm -rf /home/ec2-user/app
             
             # Clone fresh repository
             git clone https://github.com/Prithviiixx/cpp.git /home/ec2-user/app
             
-            # Navigate to app directory
-            cd /home/ec2-user/app
-            
             # Install dependencies
-            pip3 install flask flask-sqlalchemy werkzeug boto3 --user --quiet
+            cd /home/ec2-user/app
+            pip3 install flask flask-sqlalchemy werkzeug boto3 --user
             
-            # Start the Flask app with nohup and disown
-            nohup python3 /home/ec2-user/app/app.py > /home/ec2-user/flask_app.log 2>&1 &
-            disown
+            # Create startup script
+            cat > /home/ec2-user/start_app.sh << 'EOF'
+            #!/bin/bash
+            cd /home/ec2-user/app
+            python3 app.py >> /home/ec2-user/flask_app.log 2>&1
+            EOF
             
-            # Give it time to start
-            sleep 3
+            chmod +x /home/ec2-user/start_app.sh
             
-            # Check if running
-            echo "Checking if app is running..."
-            ps aux | grep -v grep | grep "python3" | grep "app.py" || echo "Process check done"
+            # Start app using nohup with setsid to fully detach
+            setsid nohup /home/ec2-user/start_app.sh &
             
+            sleep 2
             echo "Deployment completed!"
-            echo "App URL: http://${{ secrets.EC2_HOST }}:5000"
